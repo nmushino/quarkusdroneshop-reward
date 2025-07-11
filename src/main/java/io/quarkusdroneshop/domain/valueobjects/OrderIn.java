@@ -15,19 +15,23 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class OrderIn {
 
     @JsonProperty("id")
-    private final String orderId;
+    private String orderId;
 
-    private final String lineItemId;
+    private String lineItemId;
 
-    private final Item item;
+    private Item item;
 
-    private final String name;
+    private String name;
 
-    private final Instant timestamp;
+    private Instant timestamp;
     
-    private final BigDecimal price;
+    private BigDecimal price;
 
-    public final String orderSource;
+    public String orderSource;
+
+    public OrderIn() {
+        // デフォルトコンストラクタ（Jackson用に必要）
+    }
 
     // コンストラクタ（すべての値を受け取る）
     public OrderIn(String orderId, String lineItemId, Item item, String name, BigDecimal price, String orderSource) {
@@ -106,7 +110,7 @@ public class OrderIn {
         return this.price;
     }
 
-    public String orderSource() {
+    public String getOrderSource() {
         return this.orderSource;
     }
 }
