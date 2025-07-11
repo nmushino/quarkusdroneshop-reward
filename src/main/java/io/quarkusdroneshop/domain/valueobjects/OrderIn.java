@@ -53,7 +53,7 @@ public class OrderIn {
                 .add("name='" + name + "'")
                 .add("timestamp=" + timestamp)
                 .add("price=" + price)
-                .add("price=" + orderSource)
+                .add("orderSource=" + orderSource)
                 .toString();
     }
 
