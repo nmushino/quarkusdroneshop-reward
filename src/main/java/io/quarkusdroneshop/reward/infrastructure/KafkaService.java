@@ -17,6 +17,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,44 +53,61 @@ public class KafkaService {
     private final Map<String, Integer> purchaseCount = new ConcurrentHashMap<>();
 
     @Incoming("orders-in")
-    public CompletionStage<Void> onOrderBatch(OrderBatch batch) {
-        logger.debug("OrderBatch received: {}", batch.id);
-
-        Stream.concat(
-            batch.qdca10LineItems.stream().map(li -> new AbstractMap.SimpleEntry<>(li, false)),
-            batch.qdca10proLineItems.stream().map(li -> new AbstractMap.SimpleEntry<>(li, true))
-        ).forEach(entry -> {
-            OrderBatch.LineItem lineItem = entry.getKey();
-            boolean isPro = entry.getValue();
-
-            String customerName = lineItem.name;
-
-            // purchase count update
-            int count = purchaseCount.merge(customerName, 1, Integer::sum);
-
-            OrderIn orderIn = new OrderIn(
-                batch.id,
-                null,
-                Item.valueOf(lineItem.item),
-                lineItem.name,
-                lineItem.price
-            );
-
-            OrderProcessingResult result = isPro ? qdca10pro.make(orderIn) : qdca10.make(orderIn);
-
-            if (result.isEightySixed()) {
-                eightySixEmitter.send(orderIn.getItem().toString());
-            } else {
-                orderUpEmitter.send(result.getOrderUp());
-
-                if (count == 5) {
-                    BigDecimal reward = lineItem.price.multiply(BigDecimal.valueOf(0.10));
-                    rewardEmitter.send(new RewardEvent(customerName, batch.id, reward));
-                    // purchaseCount.put(customerName, 0); // 必要なら
+    public CompletionStage<Void> onOrderIn(OrderBatch batch) {
+        return CompletableFuture.runAsync(() -> {
+    
+            // 顧客名ごとの件数を処理
+            Map<String, Integer> localCounter = new HashMap<>();
+    
+            // qdca10 と pro を1つのストリームに統合
+            Stream.concat(
+                batch.qdca10LineItems.stream().map(item -> Map.entry(item, false)),
+                batch.qdca10proLineItems.stream().map(item -> Map.entry(item, true))
+            ).forEach(entry -> {
+                OrderBatch.LineItem lineItem = entry.getKey();
+                boolean isPro = entry.getValue();
+    
+                OrderIn orderIn = new OrderIn(
+                    batch.orderId,
+                    null,
+                    Item.valueOf(lineItem.item),
+                    lineItem.name,
+                    lineItem.price
+                );
+    
+                OrderProcessingResult result = isPro ? qdca10pro.make(orderIn) : qdca10.make(orderIn);
+    
+                if (result.isEightySixed()) {
+                    eightySixEmitter.send(orderIn.getItem().toString());
+                } else {
+                    orderUpEmitter.send(result.getOrderUp());
+    
+                    // 顧客単位のカウントを更新
+                    localCounter.merge(orderIn.getName(), 1, Integer::sum);
                 }
-            }
+            });
+    
+            // purchaseCount に反映し、5件に達したらリワード発行
+            localCounter.forEach((name, localCount) -> {
+                int total = purchaseCount.merge(name, localCount, Integer::sum);
+                if (total - localCount < 5 && total >= 5) {
+                    // 🎁 ちょうど5件に到達した時点でリワード付与（それ以前に付与していないことを前提）
+                    BigDecimal rewardPoints = BigDecimal.ZERO;
+    
+                    // 適当に平均単価×5個で計算（必要に応じて正確な計算ロジックに修正可）
+                    BigDecimal averagePrice = Stream.concat(batch.qdca10LineItems.stream(), batch.qdca10proLineItems.stream())
+                        .filter(li -> li.name.equals(name))
+                        .map(li -> li.price)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .divide(BigDecimal.valueOf(localCount), BigDecimal.ROUND_HALF_UP);
+    
+                    // 通常は10%、Proなら15%（ここでは混合前提なので仮に10%適用）
+                    rewardPoints = averagePrice.multiply(BigDecimal.valueOf(5)).multiply(BigDecimal.valueOf(0.10));
+    
+                    RewardEvent rewardEvent = new RewardEvent(name, batch.id, rewardPoints);
+                    rewardEmitter.send(rewardEvent);
+                }
+            });
         });
-
-        return CompletableFuture.completedFuture(null);
     }
 }

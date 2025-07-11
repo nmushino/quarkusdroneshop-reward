@@ -3,8 +3,13 @@ package io.quarkusdroneshop.reward.domain;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class OrderBatch {
-    public String id;
+
+    @JsonProperty("id")
+    public String orderId;
+    
     public String orderSource;
     public String location;
     public List<LineItem> qdca10LineItems;
