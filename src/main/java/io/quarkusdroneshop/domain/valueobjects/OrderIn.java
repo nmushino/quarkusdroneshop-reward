@@ -7,9 +7,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.StringJoiner;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @RegisterForReflection
 public class OrderIn {
 
+    @JsonProperty("id")
     private final String orderId;
 
     private final String lineItemId;
