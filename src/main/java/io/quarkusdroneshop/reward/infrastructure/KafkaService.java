@@ -104,7 +104,7 @@ public class KafkaService {
                     // 通常は10%、Proなら15%（ここでは混合前提なので仮に10%適用）
                     rewardPoints = averagePrice.multiply(BigDecimal.valueOf(5)).multiply(BigDecimal.valueOf(0.10));
     
-                    RewardEvent rewardEvent = new RewardEvent(name, batch.id, rewardPoints);
+                    RewardEvent rewardEvent = new RewardEvent(name, batch.orderId, rewardPoints);
                     rewardEmitter.send(rewardEvent);
                 }
             });
