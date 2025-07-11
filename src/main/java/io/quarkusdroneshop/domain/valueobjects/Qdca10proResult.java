@@ -37,18 +37,18 @@ public class Qdca10proResult {
                     madeBy
             );
 
-            // 🎁 Pro条件：5個以上 → 15%還元
-            if (orderIn.getQuantity() >= 5) {
-                BigDecimal rewardPoints = orderIn.getPrice()
-                        .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
-                        .multiply(BigDecimal.valueOf(0.15)); // ← Proでは15%
-                RewardEvent rewardEvent = new RewardEvent(
-                        orderIn.getName(),
-                        orderIn.getItem().toString(),
-                        rewardPoints
-                );
-                orderUp.setRewardEvent(rewardEvent);
-            }
+            // // 🎁 Pro条件：5個以上 → 15%還元
+            // if (orderIn.getQuantity() >= 5) {
+            //     BigDecimal rewardPoints = orderIn.getPrice()
+            //             .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
+            //             .multiply(BigDecimal.valueOf(0.15)); // ← Proでは15%
+            //     RewardEvent rewardEvent = new RewardEvent(
+            //             orderIn.getName(),
+            //             orderIn.getItem().toString(),
+            //             rewardPoints
+            //     );
+            //     orderUp.setRewardEvent(rewardEvent);
+            // }
 
             return new Qdca10proResult(orderUp);
 

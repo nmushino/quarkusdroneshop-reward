@@ -37,18 +37,18 @@ public class Qdca10Result {
                     madeBy
             );
 
-            // 🎁 リワード条件に該当する場合にポイント付与
-            if (orderIn.getQuantity() >= 5) {
-                BigDecimal rewardPoints = orderIn.getPrice()
-                                                .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
-                                                .multiply(BigDecimal.valueOf(0.10)); // 10%
-                RewardEvent rewardEvent = new RewardEvent(
-                    orderIn.getName(),
-                    orderIn.getItem().toString(),
-                    rewardPoints
-                );
-                orderUp.setRewardEvent(rewardEvent); // OrderUp に追加（次ステップで拡張）
-            }
+            // // 🎁 リワード条件に該当する場合にポイント付与
+            // if (orderIn.getQuantity() >= 5) {
+            //     BigDecimal rewardPoints = orderIn.getPrice()
+            //                                     .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
+            //                                     .multiply(BigDecimal.valueOf(0.10)); // 10%
+            //     RewardEvent rewardEvent = new RewardEvent(
+            //         orderIn.getName(),
+            //         orderIn.getItem().toString(),
+            //         rewardPoints
+            //     );
+            //     orderUp.setRewardEvent(rewardEvent); // OrderUp に追加（次ステップで拡張）
+            // }
 
             return new Qdca10Result(orderUp);
 

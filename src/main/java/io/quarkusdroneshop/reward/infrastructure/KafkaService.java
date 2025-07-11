@@ -70,7 +70,7 @@ public class KafkaService {
             OrderIn orderIn = new OrderIn(
                 batch.id,
                 null,
-                new Item(lineItem.item),
+                Item.valueOf(lineItem.item),
                 lineItem.name,
                 lineItem.price
             );

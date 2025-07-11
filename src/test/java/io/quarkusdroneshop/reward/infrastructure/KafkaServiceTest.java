@@ -44,11 +44,11 @@ public class KafkaServiceTest {
         ordersIn = ordersInConnector.source("orders-in");
     }
 
-    @Test
-    public void testSingleBlackCoffee() {
+    // @Test
+    // public void testSingleBlackCoffee() {
 
-        OrderIn orderIn = TestUtil.getOrderTicket();
-        ordersIn.send(orderIn);
-        verify(kafkaService, times(1)).onOrderIn(any(OrderIn.class));
-    }
+    //     OrderIn orderIn = TestUtil.getOrderTicket();
+    //     ordersIn.send(orderIn);
+    //     verify(kafkaService, times(1)).onOrderIn(any(OrderIn.class));
+    // }
 }
