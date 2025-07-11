@@ -13,6 +13,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ejb.Asynchronous;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.math.RoundingMode;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.concurrent.CompletableFuture;
@@ -52,6 +54,7 @@ public class KafkaService {
     private final Map<String, Integer> purchaseCount = new ConcurrentHashMap<>();
 
     @Incoming("orders-in")
+    @Asynchronous
     public CompletionStage<Void> onOrderIn(OrderBatch batch) {
         return CompletableFuture.runAsync(() -> {
 
@@ -94,17 +97,24 @@ public class KafkaService {
             localCounter.forEach((name, localCount) -> {
                 int total = purchaseCount.merge(name, localCount, Integer::sum);
                 if (total - localCount < 5 && total >= 5) {
-                    BigDecimal averagePrice = Stream.concat(batch.qdca10LineItems.stream(), batch.qdca10proLineItems.stream())
-                        .filter(li -> li.name.equals(name))
-                        .map(li -> li.price)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add)
-                        .divide(BigDecimal.valueOf(localCount), BigDecimal.ROUND_HALF_UP);
-
-                    BigDecimal rewardPoints = averagePrice.multiply(BigDecimal.valueOf(5)).multiply(BigDecimal.valueOf(0.10));
+                    BigDecimal averagePrice = calculateAveragePrice(batch, name, localCount);
+                    BigDecimal rewardPoints = calculateRewardPoints(averagePrice, localCount);
                     RewardEvent rewardEvent = new RewardEvent(name, batch.orderId, rewardPoints);
                     rewardEmitter.send(rewardEvent);
                 }
             });
         });
+    }
+    private BigDecimal calculateAveragePrice(OrderBatch batch, String name, int localCount) {
+        return Stream.concat(batch.qdca10LineItems.stream(), batch.qdca10proLineItems.stream())
+            .filter(li -> li.name.equals(name))
+            .map(li -> li.price)
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .divide(BigDecimal.valueOf(localCount), RoundingMode.HALF_UP);
+    }
+    
+    private BigDecimal calculateRewardPoints(BigDecimal averagePrice, int localCount) {
+        return averagePrice.multiply(BigDecimal.valueOf(localCount))
+            .multiply(BigDecimal.valueOf(0.10)); // 10%還元
     }
 }
