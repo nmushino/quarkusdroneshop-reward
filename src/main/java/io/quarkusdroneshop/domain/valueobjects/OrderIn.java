@@ -8,7 +8,9 @@ import java.time.Instant;
 import java.util.StringJoiner;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @RegisterForReflection
 public class OrderIn {
 
@@ -23,16 +25,19 @@ public class OrderIn {
 
     private final Instant timestamp;
     
-    private final BigDecimal price; 
+    private final BigDecimal price;
+
+    public final String orderSource;
 
     // コンストラクタ（すべての値を受け取る）
-    public OrderIn(String orderId, String lineItemId, Item item, String name, BigDecimal price) {
+    public OrderIn(String orderId, String lineItemId, Item item, String name, BigDecimal price, String orderSource) {
         this.orderId = orderId;
         this.lineItemId = lineItemId;
         this.item = item;
         this.name = name;
         this.timestamp = Instant.now();
         this.price = price;
+        this.orderSource = orderSource;
     }
 
     @Override
@@ -44,6 +49,7 @@ public class OrderIn {
                 .add("name='" + name + "'")
                 .add("timestamp=" + timestamp)
                 .add("price=" + price)
+                .add("price=" + orderSource)
                 .toString();
     }
 
@@ -60,6 +66,7 @@ public class OrderIn {
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (!name.equals(that.name)) return false;
         if (!timestamp.equals(that.timestamp)) return false;
+        if (!orderSource.equals(that.orderSource)) return false;
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
     }
 
@@ -71,6 +78,7 @@ public class OrderIn {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + price.hashCode();
+        result = 31 * result + (orderSource != null ? orderSource.hashCode() : 0);
         return result;
     }
 
@@ -98,4 +106,7 @@ public class OrderIn {
         return this.price;
     }
 
+    public String orderSource() {
+        return this.orderSource;
+    }
 }

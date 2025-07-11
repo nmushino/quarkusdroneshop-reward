@@ -15,7 +15,8 @@ public class TestUtil {
                 UUID.randomUUID().toString(),
                 Item.QDC_A101,
                 "Lemmy",
-                new BigDecimal("135.50")
+                new BigDecimal("135.50"),
+                "WEB"
         );
     }
 

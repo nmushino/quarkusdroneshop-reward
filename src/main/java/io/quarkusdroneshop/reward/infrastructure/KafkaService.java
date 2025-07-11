@@ -72,7 +72,8 @@ public class KafkaService {
                     null,
                     Item.valueOf(lineItem.item),
                     lineItem.name,
-                    lineItem.price
+                    lineItem.price,
+                    batch.orderSource
                 );
     
                 OrderProcessingResult result = isPro ? qdca10pro.make(orderIn) : qdca10.make(orderIn);
