@@ -19,19 +19,16 @@ public class OrderIn {
     private final String name;
 
     private final Instant timestamp;
-
-    private final int quantity;
     
     private final BigDecimal price; 
 
     // コンストラクタ（すべての値を受け取る）
-    public OrderIn(String orderId, String lineItemId, Item item, String name, int quantity, BigDecimal price) {
+    public OrderIn(String orderId, String lineItemId, Item item, String name, BigDecimal price) {
         this.orderId = orderId;
         this.lineItemId = lineItemId;
         this.item = item;
         this.name = name;
         this.timestamp = Instant.now();
-        this.quantity = quantity;
         this.price = price;
     }
 
@@ -43,7 +40,6 @@ public class OrderIn {
                 .add("item=" + item)
                 .add("name='" + name + "'")
                 .add("timestamp=" + timestamp)
-                .add("quantity=" + quantity)
                 .add("price=" + price)
                 .toString();
     }
@@ -71,7 +67,6 @@ public class OrderIn {
         result = 31 * result + (item != null ? item.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
-        result = 31 * result + quantity;
         result = 31 * result + price.hashCode();
         return result;
     }
@@ -96,9 +91,6 @@ public class OrderIn {
         return timestamp;
     }
 
-    public int getQuantity() {
-        return this.quantity;
-    }
     public BigDecimal getPrice() {
         return this.price;
     }

@@ -52,14 +52,14 @@ public class Qdca10 implements OrderProcessingResult {
                 madeBy
             );
 
-            // 🎁 5個以上で10%
-            if (orderIn.getQuantity() >= 5) {
-                BigDecimal rewardPoints = orderIn.getPrice()
-                    .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
-                    .multiply(BigDecimal.valueOf(0.10));
-                RewardEvent rewardEvent = new RewardEvent(orderIn.getName(), orderIn.getOrderId(), rewardPoints);
-                orderUp.setRewardEvent(rewardEvent);
-            }
+            // // 🎁 5個以上で10%
+            // if (orderIn.getQuantity() >= 5) {
+            //     BigDecimal rewardPoints = orderIn.getPrice()
+            //         .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
+            //         .multiply(BigDecimal.valueOf(0.10));
+            //     RewardEvent rewardEvent = new RewardEvent(orderIn.getName(), orderIn.getOrderId(), rewardPoints);
+            //     orderUp.setRewardEvent(rewardEvent);
+            // }
 
             this.isEightySixed = false;
             return this;

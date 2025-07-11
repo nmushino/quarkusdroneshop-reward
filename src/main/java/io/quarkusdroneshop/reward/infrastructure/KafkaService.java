@@ -1,8 +1,10 @@
 package io.quarkusdroneshop.reward.infrastructure;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.quarkusdroneshop.reward.domain.OrderBatch;
 import io.quarkusdroneshop.reward.domain.Qdca10;
 import io.quarkusdroneshop.reward.domain.Qdca10pro;
+import io.quarkusdroneshop.domain.Item;
 import io.quarkusdroneshop.domain.valueobjects.*;
 
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -13,7 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.math.BigDecimal;
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @ApplicationScoped
 @RegisterForReflection
@@ -39,31 +48,48 @@ public class KafkaService {
     @Channel("rewards")
     Emitter<RewardEvent> rewardEmitter;
 
+    // 💡 顧客ごとの購入数トラッキング用
+    private final Map<String, Integer> purchaseCount = new ConcurrentHashMap<>();
+
     @Incoming("orders-in")
-    public CompletableFuture<Void> onOrderIn(final OrderIn orderIn) {
+    public CompletionStage<Void> onOrderBatch(OrderBatch batch) {
+        logger.debug("OrderBatch received: {}", batch.id);
 
-        logger.debug("OrderTicket received: {}", orderIn);
+        Stream.concat(
+            batch.qdca10LineItems.stream().map(li -> new AbstractMap.SimpleEntry<>(li, false)),
+            batch.qdca10proLineItems.stream().map(li -> new AbstractMap.SimpleEntry<>(li, true))
+        ).forEach(entry -> {
+            OrderBatch.LineItem lineItem = entry.getKey();
+            boolean isPro = entry.getValue();
 
-        return CompletableFuture
-            .supplyAsync(() -> {
-                if (orderIn.getName() != null && orderIn.getName().startsWith("pro")) {
-                    return qdca10pro.make(orderIn);
-                } else {
-                    return qdca10.make(orderIn);
+            String customerName = lineItem.name;
+
+            // purchase count update
+            int count = purchaseCount.merge(customerName, 1, Integer::sum);
+
+            OrderIn orderIn = new OrderIn(
+                batch.id,
+                null,
+                new Item(lineItem.item),
+                lineItem.name,
+                lineItem.price
+            );
+
+            OrderProcessingResult result = isPro ? qdca10pro.make(orderIn) : qdca10.make(orderIn);
+
+            if (result.isEightySixed()) {
+                eightySixEmitter.send(orderIn.getItem().toString());
+            } else {
+                orderUpEmitter.send(result.getOrderUp());
+
+                if (count == 5) {
+                    BigDecimal reward = lineItem.price.multiply(BigDecimal.valueOf(0.10));
+                    rewardEmitter.send(new RewardEvent(customerName, batch.id, reward));
+                    // purchaseCount.put(customerName, 0); // 必要なら
                 }
-            })
-            .thenAccept(result -> {
-                if (result.isEightySixed()) {
-                    eightySixEmitter.send(orderIn.getItem().toString());
-                } else {
-                    OrderUp orderUp = result.getOrderUp();
-                    orderUpEmitter.send(orderUp);
+            }
+        });
 
-                    RewardEvent rewardEvent = result.getRewardEvent();
-                    if (rewardEvent != null) {
-                        rewardEmitter.send(rewardEvent);
-                    }
-                }
-            });
+        return CompletableFuture.completedFuture(null);
     }
 }
