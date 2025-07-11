@@ -1,12 +1,17 @@
 package io.quarkusdroneshop.domain.valueobjects;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.math.BigDecimal;
 
+@RegisterForReflection
 public class RewardEvent {
-    private final String customerName;
-    private final String orderId;
-    private final BigDecimal rewardAmount;
+    private String customerName;
+    private String orderId;
+    private BigDecimal rewardAmount;
 
+    public RewardEvent() {}
+
+    // 通常のコンストラクタ
     public RewardEvent(String customerName, String orderId, BigDecimal rewardAmount) {
         this.customerName = customerName;
         this.orderId = orderId;
