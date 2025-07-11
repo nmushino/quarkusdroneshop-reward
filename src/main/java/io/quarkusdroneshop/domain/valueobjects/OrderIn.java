@@ -3,6 +3,7 @@ package io.quarkusdroneshop.domain.valueobjects;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.quarkusdroneshop.domain.Item;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.StringJoiner;
 
@@ -19,12 +20,19 @@ public class OrderIn {
 
     private final Instant timestamp;
 
-    public OrderIn(String orderId, String lineItemId, Item item, String name) {
+    private final int quantity;
+    
+    private final BigDecimal price; 
+
+    // コンストラクタ（すべての値を受け取る）
+    public OrderIn(String orderId, String lineItemId, Item item, String name, int quantity, BigDecimal price) {
         this.orderId = orderId;
         this.lineItemId = lineItemId;
         this.item = item;
         this.name = name;
         this.timestamp = Instant.now();
+        this.quantity = quantity;
+        this.price = price;
     }
 
     @Override
@@ -35,6 +43,8 @@ public class OrderIn {
                 .add("item=" + item)
                 .add("name='" + name + "'")
                 .add("timestamp=" + timestamp)
+                .add("quantity=" + quantity)
+                .add("price=" + price)
                 .toString();
     }
 
@@ -49,6 +59,8 @@ public class OrderIn {
         if (lineItemId != null ? !lineItemId.equals(that.lineItemId) : that.lineItemId != null) return false;
         if (item != that.item) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (!name.equals(that.name)) return false;
+        if (!timestamp.equals(that.timestamp)) return false;
         return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
     }
 
@@ -59,6 +71,8 @@ public class OrderIn {
         result = 31 * result + (item != null ? item.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        result = 31 * result + quantity;
+        result = 31 * result + price.hashCode();
         return result;
     }
 
@@ -81,4 +95,12 @@ public class OrderIn {
     public Instant getTimestamp() {
         return timestamp;
     }
+
+    public int getQuantity() {
+        return this.quantity;
+    }
+    public BigDecimal getPrice() {
+        return this.price;
+    }
+
 }

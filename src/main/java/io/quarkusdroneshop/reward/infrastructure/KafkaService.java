@@ -1,10 +1,9 @@
-package io.quarkusdroneshop.qdca10.infrastructure;
+package io.quarkusdroneshop.reward.infrastructure;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.quarkusdroneshop.qdca10.domain.Qdca10;
-import io.quarkusdroneshop.domain.valueobjects.OrderIn;
-import io.quarkusdroneshop.domain.valueobjects.OrderUp;
-import io.quarkusdroneshop.domain.valueobjects.Qdca10Result;
+import io.quarkusdroneshop.reward.domain.Qdca10;
+import io.quarkusdroneshop.reward.domain.Qdca10pro;
+import io.quarkusdroneshop.domain.valueobjects.*;
 
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
@@ -26,6 +25,9 @@ public class KafkaService {
     Qdca10 qdca10;
 
     @Inject
+    Qdca10pro qdca10pro;
+
+    @Inject
     @Channel("orders-up")
     Emitter<OrderUp> orderUpEmitter;
 
@@ -33,20 +35,34 @@ public class KafkaService {
     @Channel("eighty-six")
     Emitter<String> eightySixEmitter;
 
+    @Inject
+    @Channel("rewards")
+    Emitter<RewardEvent> rewardEmitter;
+
     @Incoming("orders-in")
     public CompletableFuture<Void> onOrderIn(final OrderIn orderIn) {
 
         logger.debug("OrderTicket received: {}", orderIn);
-    
+
         return CompletableFuture
-            .supplyAsync(() -> qdca10.make(orderIn))
+            .supplyAsync(() -> {
+                if (orderIn.getName() != null && orderIn.getName().startsWith("pro")) {
+                    return qdca10pro.make(orderIn);
+                } else {
+                    return qdca10.make(orderIn);
+                }
+            })
             .thenAccept(result -> {
-    
                 if (result.isEightySixed()) {
                     eightySixEmitter.send(orderIn.getItem().toString());
                 } else {
-                    logger.debug("OrderUp: {}", result.getOrderUp());
-                    orderUpEmitter.send(result.getOrderUp());
+                    OrderUp orderUp = result.getOrderUp();
+                    orderUpEmitter.send(orderUp);
+
+                    RewardEvent rewardEvent = result.getRewardEvent();
+                    if (rewardEvent != null) {
+                        rewardEmitter.send(rewardEvent);
+                    }
                 }
             });
     }

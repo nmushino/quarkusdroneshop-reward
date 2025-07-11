@@ -1,4 +1,4 @@
-package io.quarkusdroneshop.qdca10.domain;
+package io.quarkusdroneshop.reward.domain;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

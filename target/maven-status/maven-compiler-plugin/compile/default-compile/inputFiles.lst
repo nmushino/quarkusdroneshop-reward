@@ -1,0 +1,17 @@
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/Qdca10pro.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/RewardEvent.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/EightySixException.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/OrderIn.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/OrderProcessingResult.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/infrastructure/OrderTicketDeserializer.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/EightySixCoffeeException.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/EightySixEvent.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/Qdca10.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/Inventory.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/EventType.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/infrastructure/KafkaService.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/reward/domain/Event.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/Qdca10Result.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/Item.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/OrderUp.java
+/Users/nmushino/Development/kafka-workshop/quarkusdronshop/quarkusdroneshop-reward/src/main/java/io/quarkusdroneshop/domain/valueobjects/Qdca10proResult.java

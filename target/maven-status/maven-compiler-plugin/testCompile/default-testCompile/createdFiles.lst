@@ -1,0 +1,6 @@
+io/quarkusdroneshop/reward/domain/Qdca10Test.class
+io/quarkusdroneshop/reward/TestUtil.class
+io/quarkusdroneshop/reward/infrastructure/KafkaServiceOrderUpTest.class
+io/quarkusdroneshop/reward/infrastructure/KafkaServiceTest.class
+io/quarkusdroneshop/reward/infrastructure/KafkaTestResource.class
+io/quarkusdroneshop/reward/domain/InventoryTest.class

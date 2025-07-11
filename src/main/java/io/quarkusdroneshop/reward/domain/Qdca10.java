@@ -1,9 +1,8 @@
-package io.quarkusdroneshop.qdca10.domain;
+package io.quarkusdroneshop.reward.domain;
 
 import io.quarkusdroneshop.domain.Item;
-import io.quarkusdroneshop.domain.valueobjects.Qdca10Result;
-import io.quarkusdroneshop.domain.valueobjects.OrderIn;
-import io.quarkusdroneshop.domain.valueobjects.OrderUp;
+import io.quarkusdroneshop.domain.valueobjects.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,15 +10,21 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.time.Instant;
 
 @ApplicationScoped
-public class Qdca10 {
+public class Qdca10 implements OrderProcessingResult {
 
     static final Logger logger = LoggerFactory.getLogger(Qdca10.class);
+
     @Inject
     Inventory inventory;
+
+    private OrderUp orderUp;
+    private EightySixEvent eightySixEvent;
+    private boolean isEightySixed;
     private String madeBy;
 
     @PostConstruct
@@ -32,63 +37,64 @@ public class Qdca10 {
         }
     }
 
-    public Qdca10Result make(final OrderIn orderIn) {
-
-        logger.debug("making: {}" + orderIn.getItem());
+    public Qdca10 make(final OrderIn orderIn) {
+        logger.debug("making: {}", orderIn.getItem());
 
         if (inventory.decrementItem(orderIn.getItem())) {
-
             sleepyTimeTime(orderIn.getItem());
 
-            return new Qdca10Result(new OrderUp(
-                    orderIn.getOrderId(),
-                    orderIn.getLineItemId(),
-                    orderIn.getItem(),
-                    orderIn.getName(),
-                    Instant.now(),
-                    madeBy));
+            orderUp = new OrderUp(
+                orderIn.getOrderId(),
+                orderIn.getLineItemId(),
+                orderIn.getItem(),
+                orderIn.getName(),
+                Instant.now(),
+                madeBy
+            );
+
+            // 🎁 5個以上で10%
+            if (orderIn.getQuantity() >= 5) {
+                BigDecimal rewardPoints = orderIn.getPrice()
+                    .multiply(BigDecimal.valueOf(orderIn.getQuantity()))
+                    .multiply(BigDecimal.valueOf(0.10));
+                RewardEvent rewardEvent = new RewardEvent(orderIn.getName(), orderIn.getOrderId(), rewardPoints);
+                orderUp.setRewardEvent(rewardEvent);
+            }
+
+            this.isEightySixed = false;
+            return this;
         } else {
-
-            return new Qdca10Result(new EightySixEvent(orderIn.getItem()));
+            this.orderUp = null;
+            this.eightySixEvent = new EightySixEvent(orderIn.getItem());
+            this.isEightySixed = true;
+            return this;
         }
-
     }
 
     private void sleepyTimeTime(final Item item) {
-        int i = calculateDelay(item);
         try {
-            Thread.sleep(i);
+            Thread.sleep(3000); // 適当な処理時間
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    private int calculateDelay(final Item item) {
-        int delay;
-        switch (item) {
-            case QDC_A101:
-                delay = 5000;
-                break;
-            case QDC_A102:
-                delay = 5000;
-                break;
-            case QDC_A103:
-                delay = 7000;
-                break;
-            case QDC_A104_AC:
-                delay = 7000;
-                break;
-            case QDC_A104_AT:
-                delay = 10000;
-                break;
-            default:
-                delay = 10000;
-                break;
-        }
-        ;
-        return delay;
+    // OrderProcessingResult 実装
+    public boolean isEightySixed() {
+        return isEightySixed;
     }
 
+    public OrderUp getOrderUp() {
+        return orderUp;
+    }
+
+    public RewardEvent getRewardEvent() {
+        return orderUp != null ? orderUp.getRewardEvent() : null;
+    }
+
+    public EightySixEvent getEightySixEvent() {
+        return eightySixEvent;
+    }
 
     public void restockItem(Item item) {
         inventory.restock(item);

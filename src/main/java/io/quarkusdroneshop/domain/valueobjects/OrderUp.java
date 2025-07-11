@@ -67,4 +67,15 @@ public class OrderUp {
         result = 31 * result + (madeBy != null ? madeBy.hashCode() : 0);
         return result;
     }
+
+    private RewardEvent rewardEvent;
+
+    public RewardEvent getRewardEvent() {
+        return rewardEvent;
+    }
+
+    public void setRewardEvent(RewardEvent rewardEvent) {
+        this.rewardEvent = rewardEvent;
+    }
+
 }
