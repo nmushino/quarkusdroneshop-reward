@@ -1,20 +1,31 @@
 package io.quarkusdroneshop.reward.infrastructure;
 
 import io.quarkusdroneshop.reward.domain.OrderBatch;
+import io.quarkusdroneshop.domain.valueobjects.OrderIn;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import java.io.IOException;
 
-public class OrderTicketDeserializer implements Deserializer<OrderBatch> {
+import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+// public class OrderTicketDeserializer implements Deserializer<OrderBatch> {
 
-    @Override
-    public OrderBatch deserialize(String topic, byte[] data) {
-        try {
-            return mapper.readValue(data, OrderBatch.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to deserialize OrderBatch", e);
-        }
+//     private final ObjectMapper mapper = new ObjectMapper();
+
+//     @Override
+//     public OrderBatch deserialize(String topic, byte[] data) {
+//         try {
+//             //return mapper.readValue(data, OrderBatch.class);
+//             return mapper.readValue(data, OrderIn.class);
+//         } catch (IOException e) {
+//             throw new RuntimeException("Failed to deserialize OrderBatch", e);
+//         }
+//     }
+// }
+
+public class OrderTicketDeserializer extends ObjectMapperDeserializer<OrderIn> {
+
+    public OrderTicketDeserializer() {
+        super(OrderIn.class);
     }
 }
