@@ -8,24 +8,17 @@ import java.io.IOException;
 
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 
-// public class OrderTicketDeserializer implements Deserializer<OrderBatch> {
+public class OrderTicketDeserializer implements Deserializer<OrderBatch> {
 
-//     private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-//     @Override
-//     public OrderBatch deserialize(String topic, byte[] data) {
-//         try {
-//             //return mapper.readValue(data, OrderBatch.class);
-//             return mapper.readValue(data, OrderIn.class);
-//         } catch (IOException e) {
-//             throw new RuntimeException("Failed to deserialize OrderBatch", e);
-//         }
-//     }
-// }
-
-public class OrderTicketDeserializer extends ObjectMapperDeserializer<OrderIn> {
-
-    public OrderTicketDeserializer() {
-        super(OrderIn.class);
+    @Override
+    public OrderBatch deserialize(String topic, byte[] data) {
+        try {
+            return mapper.readValue(data, OrderBatch.class);
+            //return mapper.readValue(data, OrderIn.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize OrderBatch", e);
+        }
     }
 }

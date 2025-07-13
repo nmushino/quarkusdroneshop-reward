@@ -1,31 +1,21 @@
 package io.quarkusdroneshop.reward.infrastructure;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.quarkusdroneshop.reward.domain.OrderBatch;
-import io.quarkusdroneshop.reward.domain.Qdca10;
-import io.quarkusdroneshop.reward.domain.Qdca10pro;
 import io.quarkusdroneshop.domain.Item;
 import io.quarkusdroneshop.domain.valueobjects.*;
+import io.quarkusdroneshop.reward.domain.OrderBatch;
+import io.quarkusdroneshop.reward.domain.Purchase;
 
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ejb.Asynchronous;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.math.RoundingMode;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @ApplicationScoped
 @RegisterForReflection
@@ -33,39 +23,21 @@ public class KafkaService {
 
     Logger logger = LoggerFactory.getLogger(KafkaService.class);
 
-    @Inject
-    Qdca10 qdca10;
-
-    @Inject
-    Qdca10pro qdca10pro;
-
-    @Inject
-    @Channel("orders-up")
-    Emitter<OrderUp> orderUpEmitter;
-
-    @Inject
-    @Channel("eighty-six")
-    Emitter<String> eightySixEmitter;
-
-    @Inject
-    @Channel("rewards")
-    Emitter<RewardEvent> rewardEmitter;
-
+    // 累積購入数
     private final Map<String, Integer> purchaseCount = new ConcurrentHashMap<>();
 
+    @Inject Purchase purchase;
+
+    @Inject @Channel("rewards")
+    Emitter<RewardEvent> rewardEmitter;
+
     @Incoming("orders-in")
-    @Asynchronous
+    @Acknowledgment(Acknowledgment.Strategy.PRE_PROCESSING)
     public CompletionStage<Void> onOrderIn(OrderBatch batch) {
         return CompletableFuture.runAsync(() -> {
+            logger.info("Received OrderBatch: {}", batch);
 
-            // 🔍 qdca10LineItems の中身を出力（デバッグ用）
-            for (OrderBatch.LineItem lineItem : batch.qdca10LineItems) {
-                System.out.println("Item: " + lineItem.item + ", name: " + lineItem.name + ", price: " + lineItem.price);
-            }
-            for (OrderBatch.LineItem lineItem : batch.qdca10proLineItems) {
-                System.out.println("Item: " + lineItem.item + ", name: " + lineItem.name + ", price: " + lineItem.price);
-            }
-
+            // 今回のバッチでのカウント
             Map<String, Integer> localCounter = new HashMap<>();
 
             Stream.concat(
@@ -75,7 +47,7 @@ public class KafkaService {
                 OrderBatch.LineItem lineItem = entry.getKey();
                 boolean isPro = entry.getValue();
 
-                OrderIn orderIn = new OrderIn(
+                OrderIn reconstructedOrder = new OrderIn(
                     batch.orderId,
                     null,
                     Item.valueOf(lineItem.item),
@@ -84,37 +56,15 @@ public class KafkaService {
                     batch.orderSource
                 );
 
-                OrderProcessingResult result = isPro ? qdca10pro.make(orderIn) : qdca10.make(orderIn);
+                OrderProcessingResult result = purchase.make(reconstructedOrder);
 
-                if (result.isEightySixed()) {
-                    eightySixEmitter.send(orderIn.getItem().toString());
-                } else {
-                    orderUpEmitter.send(result.getOrderUp());
-                    localCounter.merge(orderIn.getName(), 1, Integer::sum);
+                if (!result.isEightySixed()) {
+                    localCounter.merge(reconstructedOrder.getName(), 1, Integer::sum);
                 }
             });
 
-            localCounter.forEach((name, localCount) -> {
-                int total = purchaseCount.merge(name, localCount, Integer::sum);
-                if (total - localCount < 5 && total >= 5) {
-                    BigDecimal averagePrice = calculateAveragePrice(batch, name, localCount);
-                    BigDecimal rewardPoints = calculateRewardPoints(averagePrice, localCount);
-                    RewardEvent rewardEvent = new RewardEvent(name, batch.orderId, rewardPoints);
-                    rewardEmitter.send(rewardEvent);
-                }
-            });
+            // リワード処理（Purchase に委譲）
+            purchase.processRewards(batch, localCounter, purchaseCount);
         });
-    }
-    private BigDecimal calculateAveragePrice(OrderBatch batch, String name, int localCount) {
-        return Stream.concat(batch.qdca10LineItems.stream(), batch.qdca10proLineItems.stream())
-            .filter(li -> li.name.equals(name))
-            .map(li -> li.price)
-            .reduce(BigDecimal.ZERO, BigDecimal::add)
-            .divide(BigDecimal.valueOf(localCount), RoundingMode.HALF_UP);
-    }
-    
-    private BigDecimal calculateRewardPoints(BigDecimal averagePrice, int localCount) {
-        return averagePrice.multiply(BigDecimal.valueOf(localCount))
-            .multiply(BigDecimal.valueOf(0.10)); // 10%還元
     }
 }

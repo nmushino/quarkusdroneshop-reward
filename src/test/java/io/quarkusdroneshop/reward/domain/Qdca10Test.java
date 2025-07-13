@@ -23,26 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class Qdca10Test {
 
     @Inject
-    Qdca10 Qdca10;
-
-    @Inject
-    Inventory inventory;
+    Purchase Qdca10;
 
     private String madeBy = "default";
 
     Jsonb jsonb = JsonbBuilder.create();
-
-    @BeforeEach
-    public void restock() {
-        Qdca10.restockItem(Item.QDC_A101);
-    }
 
     @Test
     public void testQdca10Order() throws ExecutionException, InterruptedException {
     
         OrderIn orderIn = TestUtil.getOrderTicket();
     
-        Qdca10Result qdca10Result = Qdca10Result.make(orderIn, inventory, madeBy);
+        Qdca10Result qdca10Result = Qdca10Result.make(orderIn, madeBy);
     
         OrderUp orderUp = qdca10Result.getOrderUp();
     
