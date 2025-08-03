@@ -1,0 +1,80 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: s2i-build-template
+  title: S2I Build and Deploy Template
+  description: GitHub リポジトリからコードを取得し、OpenShift S2I ビルドを実行
+spec:
+  owner: team-name
+  type: service
+
+  parameters:
+    - title: アプリ情報
+      required:
+        - app_name
+        - git_owner_name
+        - git_repo_name
+      properties:
+        app_name:
+          type: string
+          title: アプリ名
+        git_owner_name:
+          type: string
+          title: GitHub オーナー名
+          default: nmushino
+        git_repo_name:
+          type: string
+          title: GitHub リポジトリ名
+          default: quarkusdroneshop-reward
+
+  steps:
+    - id: fetch
+      name: GitHubからコードを取得
+      action: fetch:template
+      input:
+        url: https://github.com/${{ parameters.git_owner_name }}/${{ parameters.git_repo_name }}
+        targetPath: ./workspace
+
+    - id: create-pr
+      name: Push to GitHub
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=${{ parameters.git_owner_name }}&repo=${{ parameters.git_repo_name }}
+        repoVisibility: public
+        sourcePath: ./workspace
+        defaultBranch: main
+        protectDefaultBranch: false
+
+    - id: run-tekton
+      name: Tekton PipelineRun 作成
+      action: create:tekton:pipelinerun
+      input:
+        manifest:
+          apiVersion: tekton.dev/v1beta1
+          kind: PipelineRun
+          metadata:
+            name: s2i-${{ parameters.app_name }}-run
+            namespace: quarkusdroneshop-cicd
+          spec:
+            pipelineRef:
+              name: s2i-build-and-deploy
+            params:
+              - name: GIT_REPO
+                value: https://github.com/${{ parameters.git_owner_name }}/${{ parameters.git_repo_name }}.git
+              - name: IMAGE_NAME
+                value: image-registry.openshift-image-registry.svc:5000/quarkusdroneshop-cicd/${{ parameters.app_name }}
+            workspaces:
+              - name: shared-workspace
+                volumeClaimTemplate:
+                  metadata:
+                    name: s2i-pvc-${{ parameters.app_name }}
+                  spec:
+                    accessModes: [ "ReadWriteOnce" ]
+                    resources:
+                      requests:
+                        storage: 1Gi
+
+  output:
+    links:
+      - title: GitHub リポジトリ
+        url: https://github.com/${{ parameters.git_owner_name }}/${{ parameters.git_repo_name }}
