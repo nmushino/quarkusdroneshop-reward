@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.app_name }}
+  description: Rewardのマイクロサービスです
+  labels:
+    app: reward
+  annotations:
+    backstage.io/kubernetes-id: ${{ values.app_name }}
+    tektonci.io/pipeline: ${{ values.app_name }}
+    tekton.dev/type: pipeline
+spec:
+  type: service
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: b-cluster
